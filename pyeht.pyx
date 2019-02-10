@@ -169,6 +169,7 @@ cdef extern from "symmetry.h":
 cdef extern from "prototypes.h":
     void fill_atomic_parms(atom_type*, int, FILE*, char*)
     void build_orbital_lookup_table(cell_type*, int*, int**)
+    void check_for_errors(cell_type*, detail_type*, int)
 
 """
 need to write function which replicates functionality of 'run_bind'
