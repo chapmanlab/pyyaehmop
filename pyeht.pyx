@@ -2,7 +2,7 @@ import numpy as np
 #cimport numpy as cnp
 
 from libc.stdlib cimport malloc, calloc, free
-from libc.stdio cimport FILE
+from libc.stdio cimport FILE, fopen
 from libc.string cimport strcpy
 
 ctypedef char BOOLEAN
@@ -10,6 +10,8 @@ ctypedef double real
 
 
 cdef extern from "bind.h":
+    FILE *status_file, *output_file, *walsh_file, *band_file, *FMO_file
+    FILE *MO_file
     int ATOM_SYMB_LEN=10
     int FAT=6
     int THIN=1
@@ -313,11 +315,22 @@ def run_eht(double[:, ::1] positions, list elements, double charge):
     cdef detail_type* details
     cdef int num_atoms
     cdef char[:, ::1] atom_types
+    cdef int num_orbs
+    #cdef int* orbital_lookup_table
+    cdef FILE *hell
+    global status_file
 
-    # TODO Sort out file handles here
+    # file handles (to the pits of hell)
+    hell = fopen('/dev/null', 'w')
+    status_file = hell
+    output_file = hell
+    walsh_file = hell
+    band_file = hell
+    FMO_file = hell
+    MO_file = hell
+
 
     num_atoms = positions.shape[0]
-
     # TODO Add check for null terminated strings
     atom_types = np.array(elements, dtype='S10').view(
         np.int8).reshape(num_atoms, -1)
@@ -327,7 +340,7 @@ def run_eht(double[:, ::1] positions, list elements, double charge):
     customise_details(details)
     customise_cell(cell, num_atoms, positions, atom_types, charge)
 
-    #build_orbital_lookup_table(cell, &num_orbs, &orbital_lookup_table)
+    build_orbital_lookup_table(cell, &num_orbs, &orbital_lookup_table)
 
     n = cell.num_electrons
 
