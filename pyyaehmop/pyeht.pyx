@@ -15,7 +15,7 @@ ctypedef char BOOLEAN
 ctypedef double real_t
 
 
-cdef extern from "bind.h":
+cdef extern from "yaehmop/bind.h":
     FILE *status_file, *output_file, *walsh_file, *band_file, *FMO_file
     FILE *MO_file
     int ATOM_SYMB_LEN=10
@@ -176,10 +176,10 @@ cdef extern from "bind.h":
 
     void charge_to_num_electrons(cell_type*)
 
-cdef extern from "symmetry.h":
+cdef extern from "yaehmop/symmetry.h":
     real_t SYMM_TOL=1e-3
 
-cdef extern from "prototypes.h":
+cdef extern from "yaehmop/prototypes.h":
     void fill_atomic_parms(atom_type*, int, FILE*, char*)
     void build_orbital_lookup_table(cell_type*, int*, int**)
     void check_for_errors(cell_type*, detail_type*, int)
@@ -187,23 +187,7 @@ cdef extern from "prototypes.h":
     void inner_wrapper(char*, bool)
     void cleanup_memory()
 
-"""
-need to write function which replicates functionality of 'run_bind'
 
-- allocate cell_type
-- allocate detail_type
-- set FILE handles (ie dev/null/)?
-- read_inputfile
-- automagic_k_points???
-- check_for_errors
-- inner_wrapper
-- steal results!
-  - reassign pointer to results memory to something else
-  - ie avoid copying memory?
-- cleanup_memory
-- free cell_type and detail_type
-
-"""
 cdef void make_details(detail_type* details):
     """Make a default version of a details object"""
     details.walsh_details.num_steps = 1
@@ -388,8 +372,8 @@ def run_yaehmop(double[:, ::1] positions, list elements, double charge):
     H_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
     S_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
 
-    #steal_matrix(Hamil_R.mat, num_orbs * num_orbs, H_mat)
-    #steal_matrix(Overlap_R.mat, num_orbs * num_orbs, S_mat)
+    steal_matrix(Hamil_R.mat, num_orbs * num_orbs, H_mat)
+    steal_matrix(Overlap_R.mat, num_orbs * num_orbs, S_mat)
 
     # Once we're done grabbing results, free memory again
     cleanup_memory()

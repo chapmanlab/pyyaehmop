@@ -6,11 +6,11 @@ from Cython.Build import cythonize
 #npgi = np.get_include()
 
 examples_extension = Extension(
-    name="pyeht",
-    sources=["pyeht.pyx"],
+    name="yaehmop",
+    sources=["pyyaehmop/pyeht.pyx"],
     libraries=["yaehmop_eht"],
-    library_dirs=["tightbind"],
-    include_dirs=["tightbind"],
+    #library_dirs=["lib"],
+    #include_dirs=["yaehmop"],
     extra_compile_args=['-ffast-math', '-O3'],
 )
 setup(
