@@ -1,3 +1,5 @@
+import cython
+
 import numpy as np
 #cimport numpy as cnp
 
@@ -273,6 +275,8 @@ cdef void make_cell(cell_type* cell):
     cell.using_xtal_coords = 0
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef void customise_cell(cell_type* cell, int num_atoms,
                          double[:, ::1] positions,
                          char[:, ::1] atom_types,
@@ -323,6 +327,7 @@ cdef void steal_matrix(real_t* mat, int n, double[::1] newmat):
     for i in range(n):
         newmat[i] = mat[i]
 
+
 def run_yaehmop(double[:, ::1] positions, list elements, double charge):
     """Run tight binding calculations
 
@@ -356,8 +361,8 @@ def run_yaehmop(double[:, ::1] positions, list elements, double charge):
     unit_cell = <cell_type*> calloc(1, sizeof(cell_type))
 
     # file handles (to the pits of hell)
-    #hell = fopen('/dev/null', 'w')
-    hell = stdout
+    hell = fopen('/dev/null', 'w')
+    #hell = stdout
     status_file = hell
     output_file = hell
     walsh_file = hell
@@ -383,8 +388,8 @@ def run_yaehmop(double[:, ::1] positions, list elements, double charge):
     H_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
     S_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
 
-    steal_matrix(Hamil_R.mat, num_orbs * num_orbs, H_mat)
-    steal_matrix(Overlap_R.mat, num_orbs * num_orbs, S_mat)
+    #steal_matrix(Hamil_R.mat, num_orbs * num_orbs, H_mat)
+    #steal_matrix(Overlap_R.mat, num_orbs * num_orbs, S_mat)
 
     # Once we're done grabbing results, free memory again
     cleanup_memory()
