@@ -6,8 +6,11 @@ from libc.stdio cimport FILE, fopen, stdout
 from libc.string cimport strcpy
 from libc.signal cimport signal, SIGINT
 
+## cnp.import_array()
+## define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
 ctypedef char BOOLEAN
-ctypedef double real
+ctypedef double real_t
 
 
 cdef extern from "bind.h":
@@ -17,20 +20,24 @@ cdef extern from "bind.h":
     int FAT=6
     int THIN=1
     int MOLECULAR=27
-    real THE_CONST=1.75
-    real NN_DISTANCE=2.5
-    real MULLER_MIX_DEF=0.20
-    real MULLER_E_TOL_DEF=0.01
-    real MULLER_Z_TOL_DEF=0.001
-    real K_OFFSET=0.01
+    real_t THE_CONST=1.75
+    real_t NN_DISTANCE=2.5
+    real_t MULLER_MIX_DEF=0.20
+    real_t MULLER_E_TOL_DEF=0.01
+    real_t MULLER_Z_TOL_DEF=0.001
+    real_t K_OFFSET=0.01
     cell_type* unit_cell
     detail_type* details
     int num_orbs
     int* orbital_lookup_table
+    ctypedef struct hermetian_matrix_type:
+        int dim
+        real_t *mat
+    hermetian_matrix_type Hamil_R, Hamil_K, Overlap_R, Overlap_K
     ctypedef struct Z_mat_type:
         pass
     ctypedef struct point_type:
-        real x, y, z
+        real_t x, y, z
     ctypedef struct atom_type:
         char symb[10]
         char chg_it_vary
@@ -38,14 +45,14 @@ cdef extern from "bind.h":
         point_type loc
         Z_mat_type Zmat_loc
         int ns, np, nd, nf
-        real coul_s, coul_p, coul_d, coul_f
-        real coeff_d1, coeff_d2, coeff_f1, coeff_f2
-        real s_A, s_B, s_C
-        real p_A, p_B, p_C
-        real d_A, d_B, d_C
-        real muller_s_E[7], muller_p_E[7], muller_d_E[7]
-        real muller_s_Z[4], muller_p_Z[4], muller_d_Z[4]
-        real init_s_occup, init_p_occup, init_d_occup
+        real_t coul_s, coul_p, coul_d, coul_f
+        real_t coeff_d1, coeff_d2, coeff_f1, coeff_f2
+        real_t s_A, s_B, s_C
+        real_t p_A, p_B, p_C
+        real_t d_A, d_B, d_C
+        real_t muller_s_E[7], muller_p_E[7], muller_d_E[7]
+        real_t muller_s_Z[4], muller_p_Z[4], muller_d_Z[4]
+        real_t init_s_occup, init_p_occup, init_d_occup
     ctypedef struct geom_frag_type:
         pass
     ctypedef struct Tvect_type:
@@ -59,17 +66,16 @@ cdef extern from "bind.h":
         atom_type* atoms
         geom_frag_type* geom_frags
         char using_Zmat, using_xtal_coords
-        real* distance_mat
-        real num_electrons, charge
+        real_t* distance_mat
+        real_t num_electrons, charge
         char* sym_elems
         Tvect_type tvects[3]
         point_type recip_vects[3]
         xtal_defn_type xtal_defn
         int overlaps[3]
         point_type COM
-        real princ_axes[3][3]
+        real_t princ_axes[3][3]
         equiv_atom_type* equiv_atoms
-
     ctypedef struct printing_info_type:
         pass
     ctypedef struct chg_it_parm_type:
@@ -78,8 +84,8 @@ cdef extern from "bind.h":
         pass
     ctypedef struct k_point_type:
         point_type loc
-        real weight
-        real num_filled_bands
+        real_t weight
+        real_t num_filled_bands
     ctypedef struct FMO_frag_type:
         pass
     ctypedef struct FMO_prop_type:
@@ -91,7 +97,7 @@ cdef extern from "bind.h":
     ctypedef struct walsh_details_type:
         int num_steps
         int num_vars
-        real* values
+        real_t* values
         printing_info_type* things_to_print
     ctypedef struct band_info_type:
         pass
@@ -111,7 +117,7 @@ cdef extern from "bind.h":
         BOOLEAN dump_dist_mat
         # printing options
         int upper_level_PRT, lower_level_PRT
-        real max_dist_PRT
+        real_t max_dist_PRT
         BOOLEAN distance_mat_PRT
         BOOLEAN chg_mat_PRT, Rchg_mat_PRT, wave_fn_PRT
         BOOLEAN net_chg_PRT, overlap_mat_PRT, electrostat_PRT, fermi_PRT
@@ -127,21 +133,21 @@ cdef extern from "bind.h":
         printing_info_type* step_print_options
         int num_MOs_to_print
         int *MOs_to_print
-        real rho
+        real_t rho
         char do_chg_it
         chg_it_parm_type chg_it_parms
-        real close_nn_contact
+        real_t close_nn_contact
         int num_occup_AVG
-        real occup_AVG_step
+        real_t occup_AVG_step
         int num_orbital_occups
         orbital_occup_type* orbital_occups
         int num_KPOINTS
         k_point_type* K_POINTS
         char use_automatic_kpoints, use_high_symm_p
         int points_per_axis[3]
-        real k_offset
+        real_t k_offset
         int num_occup_KPOINTS
-        real* occup_KPOINTS
+        real_t* occup_KPOINTS
         int num_bonds_OOP
         int num_FMO_frags
         int num_FCO_frags
@@ -152,24 +158,24 @@ cdef extern from "bind.h":
         COOP_type *the_COOPS
         char do_moments
         int num_moments
-        real* moments
+        real_t* moments
         walsh_details_type walsh_details
         band_info_type *band_info
         int num_overlaps_off
         overlap_cancel_type *overlaps_off
-        real the_const
-        real sparsify_value
-        real symm_tol
+        real_t the_const
+        real_t sparsify_value
+        real_t symm_tol
         int num_sym_ops
-        real *characters
+        real_t *characters
         char do_muller_it
         int *atoms_to_vary
-        real muller_mix, muller_E_tol, muller_Z_tol
+        real_t muller_mix, muller_E_tol, muller_Z_tol
 
     void charge_to_num_electrons(cell_type*)
 
 cdef extern from "symmetry.h":
-    real SYMM_TOL=1e-3
+    real_t SYMM_TOL=1e-3
 
 cdef extern from "prototypes.h":
     void fill_atomic_parms(atom_type*, int, FILE*, char*)
@@ -177,6 +183,7 @@ cdef extern from "prototypes.h":
     void check_for_errors(cell_type*, detail_type*, int)
     void run_eht(FILE*)
     void inner_wrapper(char*, bool)
+    void cleanup_memory()
 
 """
 need to write function which replicates functionality of 'run_bind'
@@ -197,7 +204,6 @@ need to write function which replicates functionality of 'run_bind'
 """
 cdef void make_details(detail_type* details):
     """Make a default version of a details object"""
-    # Initial values
     details.walsh_details.num_steps = 1
     details.walsh_details.num_vars = 0
     details.use_symmetry = 0
@@ -309,6 +315,13 @@ cdef void customise_cell(cell_type* cell, int num_atoms,
     cell.charge = 0
     charge_to_num_electrons(cell)
 
+cdef void steal_matrix(real_t* mat, int n, double[::1] newmat):
+    """Does something a little like dump_hermetian_mat"""
+    #mat = np.array(mat)
+    cdef int i
+
+    for i in range(n):
+        newmat[i] = mat[i]
 
 def run_yaehmop(double[:, ::1] positions, list elements, double charge):
     """Run tight binding calculations
@@ -335,6 +348,9 @@ def run_yaehmop(double[:, ::1] positions, list elements, double charge):
     global status_file
     global unit_cell
     global details
+    # results
+    global Hamil_R, Hamil_K, Overlap_R, Overlap_K
+
 
     details = <detail_type*> calloc(1, sizeof(detail_type))
     unit_cell = <cell_type*> calloc(1, sizeof(cell_type))
@@ -364,9 +380,16 @@ def run_yaehmop(double[:, ::1] positions, list elements, double charge):
     run_eht(hell)
     #inner_wrapper('no-file', 1)
 
-    n = unit_cell.num_electrons
+    H_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
+    S_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
 
+    steal_matrix(Hamil_R.mat, num_orbs * num_orbs, H_mat)
+    steal_matrix(Overlap_R.mat, num_orbs * num_orbs, S_mat)
+
+    # Once we're done grabbing results, free memory again
+    cleanup_memory()
+    # These objects are cleaned last now their contents are free
     free(unit_cell)
     free(details)
 
-    return n
+    return H_mat, S_mat
