@@ -2,8 +2,9 @@ import numpy as np
 #cimport numpy as cnp
 
 from libc.stdlib cimport malloc, calloc, free
-from libc.stdio cimport FILE, fopen
+from libc.stdio cimport FILE, fopen, stdout
 from libc.string cimport strcpy
+from libc.signal cimport signal, SIGINT
 
 ctypedef char BOOLEAN
 ctypedef double real
@@ -22,6 +23,8 @@ cdef extern from "bind.h":
     real MULLER_E_TOL_DEF=0.01
     real MULLER_Z_TOL_DEF=0.001
     real K_OFFSET=0.01
+    cell_type* unit_cell
+    detail_type* details
     int num_orbs
     int* orbital_lookup_table
     ctypedef struct Z_mat_type:
@@ -172,6 +175,8 @@ cdef extern from "prototypes.h":
     void fill_atomic_parms(atom_type*, int, FILE*, char*)
     void build_orbital_lookup_table(cell_type*, int*, int**)
     void check_for_errors(cell_type*, detail_type*, int)
+    void run_eht(FILE*)
+    void inner_wrapper(char*, bool)
 
 """
 need to write function which replicates functionality of 'run_bind'
@@ -190,12 +195,8 @@ need to write function which replicates functionality of 'run_bind'
 - free cell_type and detail_type
 
 """
-cdef detail_type* make_details():
+cdef void make_details(detail_type* details):
     """Make a default version of a details object"""
-    cdef detail_type* details
-
-    details = <detail_type*> malloc(sizeof(detail_type))
-
     # Initial values
     details.walsh_details.num_steps = 1
     details.walsh_details.num_vars = 0
@@ -220,7 +221,22 @@ cdef detail_type* make_details():
     details.line_width = 80
     details.k_offset = K_OFFSET
 
-    return details
+    # set other zeros
+    # details.title = 'pyeht'
+    details.num_FMO_frags = 0
+    details.num_FCO_frags = 0
+    details.do_chg_it = 0
+    details.use_automatic_kpoints = 0
+    details.use_high_symm_p = 0
+    details.no_total_DOS_PRT = 0
+    details.num_proj_DOS = 0
+    details.the_COOPS = NULL
+    details.num_MOs_to_print = 0
+    details.band_info = NULL
+    details.just_avgE = 0
+    details.just_matrices = 0
+    details.do_muller_it = 0
+
 
 cdef void customise_details(detail_type* details):
     """settings for how we run a tight binding calculation"""
@@ -242,15 +258,14 @@ cdef void customise_details(detail_type* details):
     details.just_matrices = 1
 
 
-cdef cell_type* make_cell():
-    cdef cell_type* cell
-
-    cell = <cell_type*> malloc(sizeof(cell_type))
+cdef void make_cell(cell_type* cell):
     # initial values
     cell.equiv_atoms = NULL  # isn't an int, but gets set to 0?
+    cell.geom_frags = NULL
     cell.charge = -1000.0
+    cell.using_Zmat = 0
+    cell.using_xtal_coords = 0
 
-    return cell
 
 cdef void customise_cell(cell_type* cell, int num_atoms,
                          double[:, ::1] positions,
@@ -275,9 +290,6 @@ cdef void customise_cell(cell_type* cell, int num_atoms,
     cdef bytes name
 
     # load geometry into program
-    cell.using_Zmat = 0
-    cell.using_xtal_coords = 0
-
     cell.num_atoms = num_atoms
     cell.atoms = <atom_type*>calloc(cell.num_atoms, sizeof(atom_type))
     for i in range(num_atoms):
@@ -298,7 +310,7 @@ cdef void customise_cell(cell_type* cell, int num_atoms,
     charge_to_num_electrons(cell)
 
 
-def run_eht(double[:, ::1] positions, list elements, double charge):
+def run_yaehmop(double[:, ::1] positions, list elements, double charge):
     """Run tight binding calculations
 
     Parameters
@@ -311,17 +323,25 @@ def run_eht(double[:, ::1] positions, list elements, double charge):
     Hamiltonian
     Overlap
     """
-    cdef cell_type* cell
-    cdef detail_type* details
+    #cdef cell_type* my_cell
+    #cdef detail_type* my_details
     cdef int num_atoms
     cdef char[:, ::1] atom_types
-    cdef int num_orbs
+    #cdef int num_orbs
     #cdef int* orbital_lookup_table
+    global orbital_lookup_table
+    global num_orbs
     cdef FILE *hell
     global status_file
+    global unit_cell
+    global details
+
+    details = <detail_type*> calloc(1, sizeof(detail_type))
+    unit_cell = <cell_type*> calloc(1, sizeof(cell_type))
 
     # file handles (to the pits of hell)
-    hell = fopen('/dev/null', 'w')
+    #hell = fopen('/dev/null', 'w')
+    hell = stdout
     status_file = hell
     output_file = hell
     walsh_file = hell
@@ -329,22 +349,24 @@ def run_eht(double[:, ::1] positions, list elements, double charge):
     FMO_file = hell
     MO_file = hell
 
-
     num_atoms = positions.shape[0]
     # TODO Add check for null terminated strings
     atom_types = np.array(elements, dtype='S10').view(
         np.int8).reshape(num_atoms, -1)
 
-    cell = make_cell()
-    details = make_details()
+    make_cell(unit_cell)
+    make_details(details)
+
     customise_details(details)
-    customise_cell(cell, num_atoms, positions, atom_types, charge)
+    customise_cell(unit_cell, num_atoms, positions, atom_types, charge)
+    build_orbital_lookup_table(unit_cell, &num_orbs, &orbital_lookup_table)
 
-    build_orbital_lookup_table(cell, &num_orbs, &orbital_lookup_table)
+    run_eht(hell)
+    #inner_wrapper('no-file', 1)
 
-    n = cell.num_electrons
+    n = unit_cell.num_electrons
 
-    free(cell)
+    free(unit_cell)
     free(details)
 
     return n
