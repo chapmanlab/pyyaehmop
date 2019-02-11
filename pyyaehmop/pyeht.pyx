@@ -259,9 +259,9 @@ cdef void customise_details(detail_type* details):
     details.weighted_Hij = 0
 
     # dump hamiltonian
-    details.dump_hamil = 1
+    #details.dump_hamil = 1
     # dump overlap
-    details.dump_overlap = 1
+    #details.dump_overlap = 1
     # Just Matrices
     details.just_matrices = 1
 
