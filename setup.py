@@ -8,7 +8,7 @@ from Cython.Build import cythonize
 examples_extension = Extension(
     name="yaehmop",
     sources=["pyyaehmop/pyeht.pyx"],
-    libraries=["yaehmop_eht"],
+    libraries=["yaehmop_eht", "lapack", "blas"],
     #library_dirs=["lib"],
     #include_dirs=["yaehmop"],
     extra_compile_args=['-ffast-math', '-O3'],
