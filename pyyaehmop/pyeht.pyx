@@ -1,15 +1,15 @@
+# cython: language_level=3, boundscheck=False, embedsignature=True
 import cython
 
 import numpy as np
-#cimport numpy as cnp
+cimport numpy as cnp
 
 from libc.stdlib cimport malloc, calloc, free
 from libc.stdio cimport FILE, fopen, stdout
 from libc.string cimport strcpy
 from libc.signal cimport signal, SIGINT
 
-## cnp.import_array()
-## define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+cnp.import_array()
 
 ctypedef char BOOLEAN
 ctypedef double real_t
@@ -180,6 +180,7 @@ cdef extern from "yaehmop/symmetry.h":
     real_t SYMM_TOL=1e-3
 
 cdef extern from "yaehmop/prototypes.h":
+    """#undef real"""  # conflicts with numpy real
     void fill_atomic_parms(atom_type*, int, FILE*, char*)
     void build_orbital_lookup_table(cell_type*, int*, int**)
     void check_for_errors(cell_type*, detail_type*, int)
@@ -312,13 +313,17 @@ cdef void steal_matrix(real_t* mat, int n, double[::1] newmat):
         newmat[i] = mat[i]
 
 
-def run_yaehmop(double[:, ::1] positions, list elements, double charge):
+def run_bind(double[:, ::1] positions, elements, double charge):
     """Run tight binding calculations
 
     Parameters
     ----------
-    positions
-    elements
+    positions : numpy array, float 64
+      positions of atoms
+    elements : iterable
+      element for each atom
+    charge : float
+      total charge of box
 
     Returns
     -------
@@ -381,4 +386,4 @@ def run_yaehmop(double[:, ::1] positions, list elements, double charge):
     free(unit_cell)
     free(details)
 
-    return H_mat, S_mat
+    return H_mat.reshape(num_orbs, num_orbs), S_mat.reshape(num_orbs, num_orbs)
