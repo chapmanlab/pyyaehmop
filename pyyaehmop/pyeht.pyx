@@ -16,32 +16,18 @@ ctypedef double real_t
 
 
 cdef extern from "yaehmop/bind.h":
-    FILE *status_file, *output_file, *walsh_file, *band_file, *FMO_file
-    FILE *MO_file
-    int ATOM_SYMB_LEN=10
     int FAT=6
     int THIN=1
     int MOLECULAR=27
-    real_t THE_CONST=1.75
-    real_t NN_DISTANCE=2.5
-    real_t MULLER_MIX_DEF=0.20
-    real_t MULLER_E_TOL_DEF=0.01
-    real_t MULLER_Z_TOL_DEF=0.001
-    real_t K_OFFSET=0.01
-    cell_type* unit_cell
-    detail_type* details
-    int num_orbs
-    int* orbital_lookup_table
     ctypedef struct hermetian_matrix_type:
         int dim
         real_t *mat
-    hermetian_matrix_type Hamil_R, Hamil_K, Overlap_R, Overlap_K
     ctypedef struct Z_mat_type:
         pass
     ctypedef struct point_type:
         real_t x, y, z
     ctypedef struct atom_type:
-        char symb[10]
+        char symb[10]  # ATOM_SYMB_LEN=10
         char chg_it_vary
         int which_atom, at_number, num_valence
         point_type loc
@@ -97,10 +83,7 @@ cdef extern from "yaehmop/bind.h":
     ctypedef struct COOP_type:
         pass
     ctypedef struct walsh_details_type:
-        int num_steps
-        int num_vars
-        real_t* values
-        printing_info_type* things_to_print
+        pass
     ctypedef struct band_info_type:
         pass
     ctypedef struct overlap_cancel_type:
@@ -173,62 +156,24 @@ cdef extern from "yaehmop/bind.h":
         char do_muller_it
         int *atoms_to_vary
         real_t muller_mix, muller_E_tol, muller_Z_tol
-
+    # Global variables
+    FILE *status_file, *output_file, *walsh_file, *band_file, *FMO_file
+    FILE *MO_file
+    cell_type* unit_cell
+    detail_type* details
+    int num_orbs
+    int* orbital_lookup_table
+    hermetian_matrix_type Hamil_R, Hamil_K, Overlap_R, Overlap_K
     void charge_to_num_electrons(cell_type*)
-
-cdef extern from "yaehmop/symmetry.h":
-    real_t SYMM_TOL=1e-3
 
 cdef extern from "yaehmop/prototypes.h":
     """#undef real"""  # conflicts with numpy real
     void fill_atomic_parms(atom_type*, int, FILE*, char*)
     void build_orbital_lookup_table(cell_type*, int*, int**)
-    void check_for_errors(cell_type*, detail_type*, int)
     void run_eht(FILE*)
-    void inner_wrapper(char*, bool)
+    void set_details_defaults(detail_type*)
+    void set_cell_defaults(cell_type*)
     void cleanup_memory()
-
-
-cdef void make_details(detail_type* details):
-    """Make a default version of a details object"""
-    details.walsh_details.num_steps = 1
-    details.walsh_details.num_vars = 0
-    details.use_symmetry = 0
-    details.find_princ_axes = 0
-    details.vary_zeta = 0
-    details.avg_props = 0
-    details.just_geom = 0
-    details.dump_overlap = 0
-    details.dump_hamil = 0
-    details.sparsify_value = 0.0
-    details.Execution_Mode = FAT
-    details.the_const = THE_CONST
-    details.weighted_Hij = 1
-    details.eval_electrostat = 0
-    details.close_nn_contact = NN_DISTANCE
-    details.symm_tol = SYMM_TOL
-    details.muller_mix = MULLER_MIX_DEF
-    details.muller_E_tol = MULLER_E_TOL_DEF
-    details.muller_Z_tol = MULLER_Z_TOL_DEF
-    details.num_moments = 4
-    details.line_width = 80
-    details.k_offset = K_OFFSET
-
-    # set other zeros
-    # details.title = 'pyeht'
-    details.num_FMO_frags = 0
-    details.num_FCO_frags = 0
-    details.do_chg_it = 0
-    details.use_automatic_kpoints = 0
-    details.use_high_symm_p = 0
-    details.no_total_DOS_PRT = 0
-    details.num_proj_DOS = 0
-    details.the_COOPS = NULL
-    details.num_MOs_to_print = 0
-    details.band_info = NULL
-    details.just_avgE = 0
-    details.just_matrices = 0
-    details.do_muller_it = 0
 
 
 cdef void customise_details(detail_type* details):
@@ -238,26 +183,12 @@ cdef void customise_details(detail_type* details):
     details.num_KPOINTS = 1
     details.K_POINTS = <k_point_type*>calloc(1,sizeof(k_point_type))
     details.K_POINTS[0].weight = 1.0
-    # charge 0 -> cell
 
     # Nonweighted
     details.weighted_Hij = 0
 
-    # dump hamiltonian
-    #details.dump_hamil = 1
-    # dump overlap
-    #details.dump_overlap = 1
     # Just Matrices
     details.just_matrices = 1
-
-
-cdef void make_cell(cell_type* cell):
-    # initial values
-    cell.equiv_atoms = NULL  # isn't an int, but gets set to 0?
-    cell.geom_frags = NULL
-    cell.charge = -1000.0
-    cell.using_Zmat = 0
-    cell.using_xtal_coords = 0
 
 
 @cython.boundscheck(False)
@@ -330,26 +261,20 @@ def run_bind(double[:, ::1] positions, elements, double charge):
     Hamiltonian
     Overlap
     """
-    #cdef cell_type* my_cell
-    #cdef detail_type* my_details
     cdef int num_atoms
     cdef char[:, ::1] atom_types
-    #cdef int num_orbs
-    #cdef int* orbital_lookup_table
-    global orbital_lookup_table
-    global num_orbs
-    cdef FILE *hell
-    global status_file
-    global unit_cell
-    global details
-    # results
+    cdef FILE* hell  # our portal to /dev/null
+    # global input variables
+    global unit_cell  # cell_type*
+    global details  # detail_type*
+    global orbital_lookup_table  # int*
+    global num_orbs  # int
+    # global file descriptors
+    global status_file, output_file, walsh_file
+    global band_file, FMO_file, MO_file
+    # results arrays
     global Hamil_R, Hamil_K, Overlap_R, Overlap_K
 
-
-    details = <detail_type*> calloc(1, sizeof(detail_type))
-    unit_cell = <cell_type*> calloc(1, sizeof(cell_type))
-
-    # file handles (to the pits of hell)
     hell = fopen('/dev/null', 'w')
     #hell = stdout
     status_file = hell
@@ -360,29 +285,35 @@ def run_bind(double[:, ::1] positions, elements, double charge):
     MO_file = hell
 
     num_atoms = positions.shape[0]
+    # This first converts to S10 type in numpy,
+    # Then casts this into int8/char type
     # TODO Add check for null terminated strings
     atom_types = np.array(elements, dtype='S10').view(
         np.int8).reshape(num_atoms, -1)
 
-    make_cell(unit_cell)
-    make_details(details)
+    # Allocate the input arrays and set defaults
+    details = <detail_type*> calloc(1, sizeof(detail_type))
+    unit_cell = <cell_type*> calloc(1, sizeof(cell_type))
+    set_cell_defaults(unit_cell)
+    set_details_defaults(details)
 
-    customise_details(details)
+    # Change these to our data
+    customise_details(details)  # TODO, add arguments and pass in here..
     customise_cell(unit_cell, num_atoms, positions, atom_types, charge)
+
+    # Run the calculation
     build_orbital_lookup_table(unit_cell, &num_orbs, &orbital_lookup_table)
+    run_eht(hell)  # it wants a file handle to use...
 
-    run_eht(hell)
-    #inner_wrapper('no-file', 1)
-
+    # Pilfer the loot
     H_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
     S_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
-
     steal_matrix(Hamil_R.mat, num_orbs * num_orbs, H_mat)
     steal_matrix(Overlap_R.mat, num_orbs * num_orbs, S_mat)
 
     # Once we're done grabbing results, free memory again
     cleanup_memory()
-    # These objects are cleaned last now their contents are free
+    # These objects are our responsibility!!
     free(unit_cell)
     free(details)
 
