@@ -1,5 +1,5 @@
-from distutils.core import setup
-from distutils.extension import Extension
+from setuptools import setup, find_packages
+from setuptools.extension import Extension
 from Cython.Build import cythonize
 
 import numpy as np
@@ -15,5 +15,6 @@ examples_extension = Extension(
 )
 setup(
     name="pyeht",
-    ext_modules=cythonize([examples_extension])
+    ext_modules=cythonize([examples_extension]),
+    packages=find_packages(),
 )
