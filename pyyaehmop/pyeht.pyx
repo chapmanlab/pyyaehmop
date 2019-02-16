@@ -5,7 +5,7 @@ import numpy as np
 cimport numpy as cnp
 
 from libc.stdlib cimport malloc, calloc, free
-from libc.stdio cimport FILE, fopen, stdout
+from libc.stdio cimport FILE, fopen, fclose, stdout
 from libc.string cimport strcpy
 from libc.signal cimport signal, SIGINT
 
@@ -316,5 +316,6 @@ def run_bind(double[:, ::1] positions, elements, double charge):
     # These objects are our responsibility!!
     free(unit_cell)
     free(details)
+    fclose(hell)
 
     return H_mat.reshape(num_orbs, num_orbs), S_mat.reshape(num_orbs, num_orbs)
