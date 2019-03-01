@@ -15,4 +15,5 @@ install:
   - source ci-helpers/travis/setup_conda.sh
 
 script:
-  - $MAIN_CMD $SETUP_CMD
+  - $MAIN_CMD
+  - $SETUP_CMD
