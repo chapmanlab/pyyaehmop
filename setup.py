@@ -1,11 +1,16 @@
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 from Cython.Build import cythonize
+from os import path
 
 import numpy as np
 npgi = np.get_include()
 
-examples_extension = Extension(
+here = path.abspath(path.dirname(__file__))
+with open(path.join(here, 'README.md'), 'r') as f:
+    long_descr = f.read()
+
+pyeht = Extension(
     name="yaehmop",
     sources=["pyyaehmop/pyeht.pyx"],
     libraries=["yaehmop_eht", "lapack", "blas"],
@@ -14,7 +19,10 @@ examples_extension = Extension(
     extra_compile_args=['-ffast-math', '-O3'],
 )
 setup(
-    name="pyeht",
-    ext_modules=cythonize([examples_extension]),
+    name="pyyaehmop",
+    long_description=long_descr,
+    long_description_content_type='text/markdown',
+    author='Richard J Gowers',
+    ext_modules=cythonize([pyeht]),
     packages=find_packages(),
 )
