@@ -7,7 +7,7 @@ env:
     - CONDA_CHANNELS='conda-forge'
     - CONDA_CHANNEL_PRIORITY=True
     - CONDA_DEPENDENCIES='numpy cython yaehmop>=2019'
-    - MAIN_CMD='pip install .'
+    - MAIN_CMD='python setup.py install'
     - SETUP_CMD='pytest'
 
 install:
