@@ -6,7 +6,7 @@ env:
   global:
     - CONDA_CHANNELS='conda-forge'
     - CONDA_CHANNEL_PRIORITY=True
-    - CONDA_DEPENDENCIES='numpy cython'
+    - CONDA_DEPENDENCIES='numpy cython yaehmop'
     - MAIN_CMD='python setup.py install'
     - SETUP_CMD='pytest'
 
@@ -15,6 +15,5 @@ install:
   - source ci-helpers/travis/setup_conda.sh
 
 script:
-  - $CONDA_INSTALL yaehmop
   - $MAIN_CMD
   - $SETUP_CMD

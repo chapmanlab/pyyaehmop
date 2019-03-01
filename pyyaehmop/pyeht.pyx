@@ -2,14 +2,14 @@
 import cython
 
 import numpy as np
-cimport numpy as cnp
+#cimport numpy as cnp
 
 from libc.stdlib cimport malloc, calloc, free
 from libc.stdio cimport FILE, fopen, fclose, stdout
 from libc.string cimport strcpy
 from libc.signal cimport signal, SIGINT
 
-cnp.import_array()
+#cnp.import_array()
 
 ctypedef char BOOLEAN
 ctypedef double real_t

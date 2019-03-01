@@ -1,10 +1,17 @@
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 from Cython.Build import cythonize
-from os import path
+from os import path, environ
 
-import numpy as np
-npgi = np.get_include()
+#import numpy as np
+#npgi = np.get_include()
+
+# hack for travis...
+try:
+    conda_inc = path.join(environ['CONDA_PREFIX'], 'include')
+except KeyError:
+    pass
+
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), 'r') as f:
@@ -15,7 +22,7 @@ pyeht = Extension(
     sources=["pyyaehmop/pyeht.pyx"],
     libraries=["yaehmop_eht", "lapack", "blas"],
     #library_dirs=["lib"],
-    include_dirs=[npgi],
+    include_dirs=[conda_inc],
     extra_compile_args=['-ffast-math', '-O3'],
 )
 setup(
