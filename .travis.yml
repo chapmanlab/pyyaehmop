@@ -6,7 +6,7 @@ env:
   global:
     - CONDA_CHANNELS='conda-forge'
     - CONDA_CHANNEL_PRIORITY=True
-    - CONDA_DEPENDENCIES='numpy cython
+    - CONDA_DEPENDENCIES='numpy cython'
     - MAIN_CMD='python setup.py install'
     - SETUP_CMD='pytest'
 
