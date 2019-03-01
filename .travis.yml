@@ -13,10 +13,6 @@ env:
 install:
   - git clone --depth 1 git://github.com/astropy/ci-helpers.git
   - source ci-helpers/travis/setup_conda.sh
-  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
-  - source activate test
-  - conda install -c conda-forge --yes numpy cython yaehmop pytest
-  - pip instal -U .
 
 script:
-  - pytest
+  - $MAIN_CMD $SETUP_CMD
