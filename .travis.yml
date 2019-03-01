@@ -2,12 +2,20 @@ language: python
 python:
   - '3.6'
 
+# many lines taken from cookiecutter conda setup
 before_install:
+  - pushd .
+  - cd $HOME
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
+  - MINICONDA_HOME = $HOME/miniconda
+  - ./miniconda.sh -b -p $MINICONDA_HOME
+  - echo ". $MINICONDA_HOME/etc/profile.d/conda.sh" >> ~/.bashrc  # Source the profile.d file
+  - echo "conda activate" >> ~/.bashrc  # Activate conda
+  - source ~/.bashrc  # source file to get new commands
+  - export PATH=$MINICONDA_HOME/bin:$PATH
   - conda update --yes conda
+  - popd
 
 install:
   - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
