@@ -12,15 +12,15 @@ with open(path.join(here, 'README.md'), 'r') as f:
     long_descr = f.read()
 
 include_dirs = [npgi]
-# maybe in a conda env
+# maybe in a conda env, so add this to path
 if 'CONDA_PREFIX' in environ:
     include_dirs.append(path.join(environ['CONDA_PREFIX'], 'include'))
+
 
 pyeht = Extension(
     name="yaehmop",
     sources=["pyyaehmop/pyeht.pyx"],
     libraries=["yaehmop_eht", "lapack", "blas"],
-    #library_dirs=["lib"],
     include_dirs=include_dirs,
     extra_compile_args=['-ffast-math', '-O3'],
 )
