@@ -235,21 +235,23 @@ cdef void customise_cell(cell_type* cell, int num_atoms,
     cell.charge = 0
     charge_to_num_electrons(cell)
 
-cdef void steal_matrix(real_t* mat, int n, double[::1] newmat):
+
+cdef void steal_matrix(real_t* mat, double[::1] newmat):
     """Does something a little like dump_hermetian_mat"""
     #mat = np.array(mat)
-    cdef int i
+    cdef int i, n
+    n = newmat.shape[0]
 
     for i in range(n):
         newmat[i] = mat[i]
 
 
-def run_bind(double[:, ::1] positions, elements, double charge):
+def run_bind(pos, elements, double charge):
     """Run tight binding calculations
 
     Parameters
     ----------
-    positions : numpy array, float 64
+    positions : numpy array
       positions of atoms
     elements : iterable
       element for each atom
@@ -263,7 +265,9 @@ def run_bind(double[:, ::1] positions, elements, double charge):
     """
     cdef int num_atoms
     cdef char[:, ::1] atom_types
+    cdef double[:, ::1] positions
     cdef FILE* hell  # our portal to /dev/null
+    cdef double[::1] H_mat, S_mat
     # global input variables
     global unit_cell  # cell_type*
     global details  # detail_type*
@@ -274,6 +278,8 @@ def run_bind(double[:, ::1] positions, elements, double charge):
     global band_file, FMO_file, MO_file
     # results arrays
     global Hamil_R, Hamil_K, Overlap_R, Overlap_K
+
+    positions = pos.astype(np.float64, order='C')
 
     hell = fopen('/dev/null', 'w')
     #hell = stdout
@@ -308,8 +314,8 @@ def run_bind(double[:, ::1] positions, elements, double charge):
     # Pilfer the loot
     H_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
     S_mat = np.empty(num_orbs * num_orbs, dtype=np.float64)
-    steal_matrix(Hamil_R.mat, num_orbs * num_orbs, H_mat)
-    steal_matrix(Overlap_R.mat, num_orbs * num_orbs, S_mat)
+    steal_matrix(Hamil_R.mat, H_mat)
+    steal_matrix(Overlap_R.mat, S_mat)
 
     # Once we're done grabbing results, free memory again
     cleanup_memory()
@@ -318,4 +324,5 @@ def run_bind(double[:, ::1] positions, elements, double charge):
     free(details)
     fclose(hell)
 
-    return H_mat.reshape(num_orbs, num_orbs), S_mat.reshape(num_orbs, num_orbs)
+    return (np.asarray(H_mat).reshape(num_orbs, num_orbs),
+            np.asarray(S_mat).reshape(num_orbs, num_orbs))
