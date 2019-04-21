@@ -4,14 +4,11 @@ from Cython.Build import cythonize
 from os import path, environ
 
 
-import numpy as np
-npgi = np.get_include()
-
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), 'r') as f:
     long_descr = f.read()
 
-include_dirs = [npgi]
+include_dirs = []
 # maybe in a conda env, so add this to path
 if 'CONDA_PREFIX' in environ:
     include_dirs.append(path.join(environ['CONDA_PREFIX'], 'include'))
