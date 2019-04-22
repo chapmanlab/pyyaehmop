@@ -15,7 +15,7 @@ if 'CONDA_PREFIX' in environ:
 
 
 pyeht = Extension(
-    name="pyyaehmop.pyeht",
+    name="pyyaehmop._pyeht",
     sources=["pyyaehmop/pyeht.pyx"],
     libraries=["yaehmop_eht", "lapack", "blas"],
     include_dirs=include_dirs,
