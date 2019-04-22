@@ -6,9 +6,10 @@ env:
   global:
     - CONDA_CHANNELS='conda-forge'
     - CONDA_CHANNEL_PRIORITY=True
-    - CONDA_DEPENDENCIES='numpy cython yaehmop mdanalysis'
+    - CONDA_DEPENDENCIES='numpy cython yaehmop mdanalysis pytest-cov'
     - MAIN_CMD='python setup.py develop'
-    - SETUP_CMD='pytest pyyaehmop/tests/'
+    - SETUP_CMD='pytest --cov=pyyaehmop/ pyyaehmop/tests/'
+    - CYTHON_TRACE_NOGIL=1
 
 install:
   - git clone --depth 1 git://github.com/astropy/ci-helpers.git
