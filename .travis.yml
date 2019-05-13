@@ -6,7 +6,7 @@ env:
   global:
     - CONDA_CHANNELS='conda-forge'
     - CONDA_CHANNEL_PRIORITY=True
-    - CONDA_DEPENDENCIES='numpy cython yaehmop mdanalysis pytest-cov'
+    - CONDA_DEPENDENCIES='numpy cython yaehmop mdanalysis pytest-cov lapack blas'
     - MAIN_CMD='python setup.py develop'
     - SETUP_CMD='pytest --cov=pyyaehmop/ pyyaehmop/tests/'
     - CYTHON_TRACE_NOGIL=1
